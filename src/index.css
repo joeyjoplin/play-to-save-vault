@@ -7,7 +7,7 @@
 @layer base {
   :root {
     /* Base colors - Dark theme optimized for mobile */
-    --background: 240 10% 3.9%;
+    --background: 240 10% 8%;
     --foreground: 0 0% 98%;
 
     /* Card surfaces */

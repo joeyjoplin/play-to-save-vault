@@ -7,46 +7,58 @@ import { Coins, TrendingUp, TrendingDown, Vault, Shield, AlertTriangle } from "l
 import { useToast } from "@/hooks/use-toast";
 import { DepositModal } from "@/components/vault/DepositModal";
 import { WithdrawModal } from "@/components/vault/WithdrawModal";
+import { useVaultBalance, useVaultActions, useMinVaultBalance } from "@/hooks/useVault";
 
-// TODO: Replace with actual balance from React Query + Soroban contract
-const mockBalance = 12.5; // XLM
-const minVaultBalance = 10; // TODO: Get from env var MIN_VAULT_XLM
-const isActive = mockBalance >= minVaultBalance;
-
-const mockTransactions = [
-  { id: "1", type: "deposit", amount: 5.0, date: "2024-01-15", hash: "G2X..." },
-  { id: "2", type: "withdraw", amount: 2.5, date: "2024-01-14", hash: "H3Y..." },
-  { id: "3", type: "deposit", amount: 10.0, date: "2024-01-13", hash: "J4Z..." },
-];
+const apr = 6.9; // purely illustrative APR
 
 export default function VaultPage() {
+  const { toast } = useToast();
+  // TODO: replace undefined with connected wallet address when auth is added
+  const { data: balance = 0 } = useVaultBalance(undefined);
+  const { deposit, withdraw } = useVaultActions(undefined);
+  const minVaultBalance = useMinVaultBalance();
+  const isActive = balance >= minVaultBalance;
+
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
-  const { toast } = useToast();
 
   const handleDeposit = async (amount: number) => {
-    // TODO: Implement Soroban contract deposit (approve + deposit)
-    console.log("TODO: Deposit", amount, "XLM to FeeVault contract");
-    
-    toast({
-      title: "Deposit Initiated",
-      description: `Depositing ${amount} XLM to your vault...`,
-    });
-    
-    setIsDepositOpen(false);
+    try {
+      await deposit.mutateAsync(amount);
+      toast({
+        title: "Deposit successful",
+        description: `Added ${amount} XLM to your vault.`,
+      });
+    } catch (e: any) {
+      toast({
+        title: "Deposit failed",
+        description: e?.message ?? String(e),
+        variant: "destructive",
+      });
+    } finally {
+      setIsDepositOpen(false);
+    }
   };
 
   const handleWithdraw = async (amount: number) => {
-    // TODO: Implement Soroban contract withdraw
-    console.log("TODO: Withdraw", amount, "XLM from FeeVault contract");
-    
-    toast({
-      title: "Withdrawal Initiated", 
-      description: `Withdrawing ${amount} XLM from your vault...`,
-    });
-    
-    setIsWithdrawOpen(false);
+    try {
+      await withdraw.mutateAsync(amount);
+      toast({
+        title: "Withdrawal successful",
+        description: `Withdrew ${amount} XLM from your vault.`,
+      });
+    } catch (e: any) {
+      toast({
+        title: "Withdrawal failed",
+        description: e?.message ?? String(e),
+        variant: "destructive",
+      });
+    } finally {
+      setIsWithdrawOpen(false);
+    }
   };
+
+  const maxWithdraw = balance;
 
   return (
     <div className="min-h-screen bg-background p-4 space-y-6">
@@ -56,126 +68,78 @@ export default function VaultPage() {
           Your Vault
         </h1>
         <p className="text-muted-foreground mt-2">
-          Secure Stellar storage for gaming rewards
+          Save to play. Withdraw anytime.
         </p>
       </div>
 
-      {/* Balance Card */}
-      <Card className="bg-gradient-card shadow-card border-border/50">
-        <CardHeader className="text-center space-y-4">
-          <div className="flex justify-center">
-            <div className={`p-4 rounded-2xl ${isActive ? 'bg-success/20 shadow-glow' : 'bg-warning/20'}`}>
-              <Vault className={`w-12 h-12 ${isActive ? 'text-success' : 'text-warning'}`} />
-            </div>
-          </div>
-          
-          <div>
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Coins className="w-6 h-6 text-accent" />
-              <span className="text-4xl font-bold">{mockBalance.toFixed(2)}</span>
-              <span className="text-xl font-semibold text-muted-foreground">XLM</span>
-            </div>
-            
-            <Badge 
-              variant={isActive ? "default" : "secondary"}
-              className={`${isActive ? 'bg-success hover:bg-success/90' : 'bg-warning hover:bg-warning/90'} text-white`}
-            >
-              {isActive ? (
-                <>
-                  <Shield className="w-3 h-3 mr-1" />
-                  ACTIVE
-                </>
-              ) : (
-                <>
-                  <AlertTriangle className="w-3 h-3 mr-1" />
-                  LOCKED
-                </>
-              )}
-            </Badge>
-          </div>
+      {/* Status */}
+      <Card className="bg-gradient-card border-border/50">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Vault className="w-5 h-5 text-accent" /> Vault Overview
+          </CardTitle>
+          <Badge variant={isActive ? "default" : "secondary"}>
+            {isActive ? "ACTIVE" : "LOCKED"}
+          </Badge>
         </CardHeader>
-
         <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-muted/20 rounded-lg p-4 text-center">
+              <p className="text-sm text-muted-foreground">Balance</p>
+              <p className="text-2xl font-bold text-accent">{balance.toFixed(2)} XLM</p>
+            </div>
+            <div className="bg-muted/20 rounded-lg p-4 text-center">
+              <p className="text-sm text-muted-foreground">APR (illustrative)</p>
+              <p className="text-2xl font-bold">{apr}%</p>
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="flex gap-2">
+            <Button className="flex-1" onClick={() => setIsDepositOpen(true)}>
+              <TrendingUp className="w-4 h-4 mr-2" /> Deposit
+            </Button>
+            <Button
+              variant="secondary"
+              className="flex-1"
+              onClick={() => setIsWithdrawOpen(true)}
+              disabled={balance <= 0}
+            >
+              <TrendingDown className="w-4 h-4 mr-2" /> Withdraw
+            </Button>
+          </div>
+
           {!isActive && (
-            <div className="bg-warning/10 border border-warning/20 rounded-lg p-4">
-              <p className="text-sm text-warning font-medium text-center">
-                Deposit at least {minVaultBalance} XLM to unlock gaming features
+            <div className="mt-4 flex items-start gap-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm">
+              <AlertTriangle className="w-4 h-4 mt-0.5 text-yellow-500" />
+              <p>
+                Deposit at least <span className="text-accent">{minVaultBalance} XLM</span> to unlock the game.
               </p>
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <Button 
-              variant="crypto" 
-              size="lg"
-              onClick={() => setIsDepositOpen(true)}
-              className="font-semibold"
-            >
-              <TrendingUp className="w-4 h-4" />
-              Deposit
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg"
-              onClick={() => setIsWithdrawOpen(true)}
-              disabled={mockBalance <= 0}
-            >
-              <TrendingDown className="w-4 h-4" />
-              Withdraw
-            </Button>
+          <div className="mt-4 flex items-start gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm">
+            <Shield className="w-4 h-4 mt-0.5 text-green-500" />
+            <p>Funds are withdrawable anytime in this demo (mock). Replace with your chain calls.</p>
           </div>
         </CardContent>
       </Card>
 
-      {/* Transaction History */}
-      <Card className="bg-card/50 border-border/50">
-        <CardHeader>
-          <CardTitle className="text-lg">Recent Transactions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {mockTransactions.map((tx, index) => (
-            <div key={tx.id}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${tx.type === 'deposit' ? 'bg-success/20' : 'bg-destructive/20'}`}>
-                    {tx.type === 'deposit' ? (
-                      <TrendingUp className={`w-4 h-4 text-success`} />
-                    ) : (
-                      <TrendingDown className={`w-4 h-4 text-destructive`} />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium capitalize">{tx.type}</p>
-                    <p className="text-sm text-muted-foreground">{tx.date}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className={`font-semibold ${tx.type === 'deposit' ? 'text-success' : 'text-destructive'}`}>
-                    {tx.type === 'deposit' ? '+' : '-'}{tx.amount} XLM
-                  </p>
-                  <p className="text-xs text-muted-foreground">{tx.hash}</p>
-                </div>
-              </div>
-              {index < mockTransactions.length - 1 && <Separator className="mt-3" />}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
       {/* Modals */}
-      <DepositModal 
-        isOpen={isDepositOpen} 
+      <DepositModal
+        isOpen={isDepositOpen}
         onClose={() => setIsDepositOpen(false)}
         onDeposit={handleDeposit}
-        currentBalance={mockBalance}
+        currentBalance={balance}
       />
-      
+
       <WithdrawModal
         isOpen={isWithdrawOpen}
-        onClose={() => setIsWithdrawOpen(false)} 
+        onClose={() => setIsWithdrawOpen(false)}
         onWithdraw={handleWithdraw}
-        currentBalance={mockBalance}
-        maxWithdraw={mockBalance}
+        currentBalance={balance}
+        maxWithdraw={maxWithdraw}
       />
     </div>
   );

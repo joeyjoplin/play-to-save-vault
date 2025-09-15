@@ -5,40 +5,29 @@ import { Badge } from "@/components/ui/badge";
 import { Coins, Trophy, Lock, Play, RotateCcw } from "lucide-react";
 import { CoinDropGame } from "@/components/game/CoinDropGame";
 import { GameLockedOverlay } from "@/components/game/GameLockedOverlay";
-
-// TODO: Replace with actual balance from React Query
-const mockBalance = 12.5; // XLM - change to 5 to test locked state
-const minVaultBalance = 10;
-const isGameUnlocked = mockBalance >= minVaultBalance;
+import { useVaultBalance, useMinVaultBalance } from "@/hooks/useVault";
+import { useToast } from "@/hooks/use-toast";
 
 export default function GamePage() {
+  const { toast } = useToast();
+  // TODO: swap undefined for connected wallet address when you add wallet auth
+  const { data: balance = 0, isLoading } = useVaultBalance(undefined);
+  const minVaultBalance = useMinVaultBalance();
+  const isGameUnlocked = (balance ?? 0) >= minVaultBalance;
+
   const [gameScore, setGameScore] = useState(0);
   const [coinsCollected, setCoinsCollected] = useState(0);
-  const [isGameActive, setIsGameActive] = useState(false);
-  const [gameKey, setGameKey] = useState(0); // For resetting the game
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  const startGame = useCallback(() => {
-    if (!isGameUnlocked) return;
-    setIsGameActive(true);
-    setGameScore(0);
-    setCoinsCollected(0);
-  }, [isGameUnlocked]);
-
-  const endGame = useCallback((finalScore: number, finalCoins: number) => {
-    setGameScore(finalScore);
-    setCoinsCollected(finalCoins);
-    setIsGameActive(false);
-    
-    // TODO: Save game results to backend/contract
-    console.log("TODO: Save game results:", { finalScore, finalCoins });
-  }, []);
-
-  const resetGame = useCallback(() => {
-    setGameScore(0);
-    setCoinsCollected(0);
-    setIsGameActive(false);
-    setGameKey(prev => prev + 1);
-  }, []);
+  const handleScoreChange = useCallback((score: number) => setGameScore(score), []);
+  const handleCoinsChange = useCallback((coins: number) => setCoinsCollected(coins), []);
+  const handleGameEnd = useCallback((finalScore: number, finalCoins: number) => {
+    setIsPlaying(false);
+    toast({
+      title: "Nice run! 🎉",
+      description: `Score: ${finalScore} • Coins: ${finalCoins}`,
+    });
+  }, [toast]);
 
   return (
     <div className="min-h-screen bg-background p-4 space-y-6 relative">
@@ -48,121 +37,86 @@ export default function GamePage() {
           Coin Drop Game
         </h1>
         <p className="text-muted-foreground mt-2">
-          Catch falling coins to earn XLM rewards
+          Catch falling coins to train your saving superpowers
         </p>
       </div>
 
       {/* Game Stats */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-2">
         <Card className="bg-gradient-card border-border/50">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <Trophy className="w-5 h-5 text-accent" />
-              <span className="text-2xl font-bold">{gameScore}</span>
-            </div>
-            <p className="text-sm text-muted-foreground">Score</p>
+          <CardContent className="p-3 text-center">
+            <p className="text-xs text-muted-foreground">Vault</p>
+            <p className="text-xl font-bold text-accent">
+              {isLoading ? "…" : `${balance.toFixed(2)} XLM`}
+            </p>
           </CardContent>
         </Card>
-        
         <Card className="bg-gradient-card border-border/50">
-          <CardContent className="p-4 text-center">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <Coins className="w-5 h-5 text-accent" />
-              <span className="text-2xl font-bold">{coinsCollected}</span>
-            </div>
-            <p className="text-sm text-muted-foreground">Coins</p>
+          <CardContent className="p-3 text-center">
+            <p className="text-xs text-muted-foreground">Score</p>
+            <p className="text-xl font-bold">{gameScore}</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-card border-border/50">
+          <CardContent className="p-3 text-center">
+            <p className="text-xs text-muted-foreground">Coins</p>
+            <p className="text-xl font-bold">{coinsCollected}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Vault Status */}
-      <Card className="bg-card/50 border-border/50">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Gaming Status</CardTitle>
-            <Badge 
-              variant={isGameUnlocked ? "default" : "secondary"}
-              className={`${isGameUnlocked ? 'bg-success hover:bg-success/90' : 'bg-warning hover:bg-warning/90'} text-white`}
-            >
-              {isGameUnlocked ? 'UNLOCKED' : 'LOCKED'}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Vault Balance:</span>
-            <span className="font-semibold">{mockBalance.toFixed(2)} XLM</span>
-          </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Required:</span>
-            <span className="font-semibold">{minVaultBalance} XLM</span>
-          </div>
-          
-          {!isGameUnlocked && (
-            <div className="bg-warning/10 border border-warning/20 rounded-lg p-3 mt-3">
-              <div className="flex items-center gap-2">
-                <Lock className="w-4 h-4 text-warning" />
-                <p className="text-sm text-warning font-medium">
-                  Deposit more XLM to unlock the game
-                </p>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Game Area */}
-      <Card className="bg-gradient-card border-border/50 relative overflow-hidden">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Game Area</CardTitle>
-            <div className="flex gap-2">
-              {!isGameActive && gameScore > 0 && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={resetGame}
-                >
-                  <RotateCcw className="w-4 h-4" />
-                </Button>
-              )}
-              <Button 
-                variant={isGameActive ? "destructive" : "crypto"}
-                size="sm"
-                onClick={isGameActive ? () => endGame(gameScore, coinsCollected) : startGame}
-                disabled={!isGameUnlocked}
-              >
-                {isGameActive ? (
-                  "Stop Game"
-                ) : (
-                  <>
-                    <Play className="w-4 h-4" />
-                    Start Game
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        
-        <CardContent className="p-0 h-96 relative">
-          <CoinDropGame 
-            key={gameKey}
-            isActive={isGameActive && isGameUnlocked}
-            onScoreChange={setGameScore}
-            onCoinsChange={setCoinsCollected}
-            onGameEnd={endGame}
+      <div className="relative">
+        {!isGameUnlocked && (
+          <GameLockedOverlay
+            requiredBalance={minVaultBalance}
+            currentBalance={balance ?? 0}
           />
-          
-          {/* Game Locked Overlay */}
-          {!isGameUnlocked && (
-            <GameLockedOverlay 
-              requiredBalance={minVaultBalance}
-              currentBalance={mockBalance}
-            />
-          )}
-        </CardContent>
-      </Card>
+        )}
+
+        <Card className={`bg-gradient-card border-border/50 ${!isGameUnlocked ? "opacity-50" : ""}`}>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Coins className="w-5 h-5 text-accent" /> Play to Save
+            </CardTitle>
+            <Badge variant={isGameUnlocked ? "default" : "secondary"}>
+              {isGameUnlocked ? "ACTIVE" : "LOCKED"}
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <CoinDropGame
+                isActive={isGameUnlocked && isPlaying}
+                onScoreChange={setGameScore}
+                onCoinsChange={setCoinsCollected}
+                onGameEnd={handleGameEnd}
+              />
+
+              <div className="flex gap-2 justify-center">
+                <Button
+                  onClick={() => setIsPlaying(true)}
+                  disabled={!isGameUnlocked || isPlaying}
+                >
+                  <Play className="w-4 h-4 mr-2" /> Start
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => { setIsPlaying(false); setGameScore(0); setCoinsCollected(0); }}
+                  disabled={!isGameUnlocked}
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" /> Reset
+                </Button>
+              </div>
+
+              {!isGameUnlocked && (
+                <p className="text-center text-sm text-muted-foreground">
+                  Deposit at least <span className="text-accent">{minVaultBalance} XLM</span> in your vault to play.
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

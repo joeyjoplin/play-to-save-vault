@@ -7,7 +7,7 @@ import { MobileLayout } from "./components/layout/MobileLayout";
 import AuthPage from "./pages/AuthPage";
 import VaultPage from "./pages/VaultPage";
 import GamePage from "./pages/GamePage";
-import FiatPage from "./pages/FiatPage";
+//import FiatPage from "./pages/FiatPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -41,8 +41,7 @@ const App = () => (
           >
             <Route index element={<Navigate to="/vault" replace />} />
             <Route path="vault" element={<VaultPage />} />
-            <Route path="game" element={<GamePage />} />
-            <Route path="fiat" element={<FiatPage />} />
+            <Route path="game" element={<GamePage />} />            
           </Route>
           
           {/* Catch-all for 404 */}

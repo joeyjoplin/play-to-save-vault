@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Gamepad2, Vault, CreditCard } from "lucide-react";
+import { Gamepad2, Vault} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -12,11 +12,6 @@ const navItems = [
     to: "/vault", 
     icon: Vault,
     label: "Vault",
-  },
-  {
-    to: "/fiat",
-    icon: CreditCard,
-    label: "Fiat",
   },
 ];
 

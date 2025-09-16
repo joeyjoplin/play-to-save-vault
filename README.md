@@ -40,8 +40,7 @@ A **mobile gaming platform** with DeFi themes, where:
 - Anchor integration (fiat/stable coin)
 
 ## 🏗 Architecture
-```mermaid
-flowchart LR
+
   User((Player)) -- Freighter Wallet --> Frontend
   Frontend -- RPC --> Stellar[Soroban RPC]
   Stellar --> FeeVault[FeeVault Contract]

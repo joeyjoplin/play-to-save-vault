@@ -33,6 +33,7 @@ A **mobile gaming platform** with DeFi themes, where:
   - React + TypeScript + Vite
   - TailwindCSS + shadcn/ui for clean UI
   - Stellar Soroban + Freighter for blockchain integration
+  - Blend Integration - FeeVault
 
 ---
 ## Future Implementation

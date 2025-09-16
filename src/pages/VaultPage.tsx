@@ -1,35 +1,39 @@
-import { useState } from "react";
+// src/pages/VaultPage.tsx
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Coins, TrendingUp, TrendingDown, Vault, Shield, AlertTriangle } from "lucide-react";
+import { AlertTriangle, Shield, TrendingDown, TrendingUp, Vault } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { DepositModal } from "@/components/vault/DepositModal";
 import { WithdrawModal } from "@/components/vault/WithdrawModal";
 import { useVaultBalance, useVaultActions, useMinVaultBalance } from "@/hooks/useVault";
 
-const apr = 6.9; // purely illustrative APR
+const APR_UI = 6.9; // illustrativo
 
 export default function VaultPage() {
   const { toast } = useToast();
-  // TODO: replace undefined with connected wallet address when auth is added
-  const { data: balance = 0 } = useVaultBalance(undefined);
+  // quando plugar carteira, passe o address aqui (ex.: useWallet().walletAddress)
+  const { data: balance = 0, isFetching } = useVaultBalance(undefined);
   const { deposit, withdraw } = useVaultActions(undefined);
   const minVaultBalance = useMinVaultBalance();
-  const isActive = balance >= minVaultBalance;
+  const isActive = useMemo(() => (balance ?? 0) >= minVaultBalance, [balance, minVaultBalance]);
 
   const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
 
-  const handleDeposit = async (amount: number) => {
+  async function handleDeposit(amount: number) {
+    console.debug("[VaultPage] deposit click", { amount });
     try {
+      if (!Number.isFinite(amount) || amount <= 0) throw new Error("Amount must be > 0");
       await deposit.mutateAsync(amount);
       toast({
         title: "Deposit successful",
-        description: `Added ${amount} XLM to your vault.`,
+        description: `Added ${amount} to your vault.`,
       });
     } catch (e: any) {
+      console.error("[VaultPage] deposit error:", e);
       toast({
         title: "Deposit failed",
         description: e?.message ?? String(e),
@@ -38,16 +42,19 @@ export default function VaultPage() {
     } finally {
       setIsDepositOpen(false);
     }
-  };
+  }
 
-  const handleWithdraw = async (amount: number) => {
+  async function handleWithdraw(amount: number) {
+    console.debug("[VaultPage] withdraw click", { amount });
     try {
+      if (!Number.isFinite(amount) || amount <= 0) throw new Error("Amount must be > 0");
       await withdraw.mutateAsync(amount);
       toast({
         title: "Withdrawal successful",
-        description: `Withdrew ${amount} XLM from your vault.`,
+        description: `Withdrew ${amount} from your vault.`,
       });
     } catch (e: any) {
+      console.error("[VaultPage] withdraw error:", e);
       toast({
         title: "Withdrawal failed",
         description: e?.message ?? String(e),
@@ -56,7 +63,7 @@ export default function VaultPage() {
     } finally {
       setIsWithdrawOpen(false);
     }
-  };
+  }
 
   const maxWithdraw = balance;
 
@@ -86,27 +93,35 @@ export default function VaultPage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-muted/20 rounded-lg p-4 text-center">
               <p className="text-sm text-muted-foreground">Balance</p>
-              <p className="text-2xl font-bold text-accent">{balance.toFixed(2)} XLM</p>
+              <p className="text-2xl font-bold text-accent">
+                {isFetching ? "…" : `${balance.toFixed(2)}`}
+              </p>
             </div>
             <div className="bg-muted/20 rounded-lg p-4 text-center">
               <p className="text-sm text-muted-foreground">APR (illustrative)</p>
-              <p className="text-2xl font-bold">{apr}%</p>
+              <p className="text-2xl font-bold">{APR_UI}%</p>
             </div>
           </div>
 
           <Separator />
 
           <div className="flex gap-2">
-            <Button className="flex-1" onClick={() => setIsDepositOpen(true)}>
-              <TrendingUp className="w-4 h-4 mr-2" /> Deposit
+            <Button
+              className="flex-1"
+              onClick={() => setIsDepositOpen(true)}
+              disabled={deposit.isPending}
+            >
+              <TrendingUp className="w-4 h-4 mr-2" />
+              {deposit.isPending ? "Depositing..." : "Deposit"}
             </Button>
             <Button
               variant="secondary"
               className="flex-1"
               onClick={() => setIsWithdrawOpen(true)}
-              disabled={balance <= 0}
+              disabled={withdraw.isPending || balance <= 0}
             >
-              <TrendingDown className="w-4 h-4 mr-2" /> Withdraw
+              <TrendingDown className="w-4 h-4 mr-2" />
+              {withdraw.isPending ? "Withdrawing..." : "Withdraw"}
             </Button>
           </div>
 
@@ -114,14 +129,17 @@ export default function VaultPage() {
             <div className="mt-4 flex items-start gap-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm">
               <AlertTriangle className="w-4 h-4 mt-0.5 text-yellow-500" />
               <p>
-                Deposit at least <span className="text-accent">{minVaultBalance} XLM</span> to unlock the game.
+                Deposit at least <span className="text-accent">{minVaultBalance}</span> to unlock the game.
               </p>
             </div>
           )}
 
           <div className="mt-4 flex items-start gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm">
             <Shield className="w-4 h-4 mt-0.5 text-green-500" />
-            <p>Funds are withdrawable anytime in this demo (mock). Replace with your chain calls.</p>
+            <p>
+              On-chain mode enabled. If nothing happens, check: RPC URL (HTTPS),
+              network (TESTNET), ContractId/Reserve, and Freighter is logged in.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -131,6 +149,7 @@ export default function VaultPage() {
         isOpen={isDepositOpen}
         onClose={() => setIsDepositOpen(false)}
         onDeposit={handleDeposit}
+        isSubmitting={deposit.isPending}
         currentBalance={balance}
       />
 
@@ -138,9 +157,11 @@ export default function VaultPage() {
         isOpen={isWithdrawOpen}
         onClose={() => setIsWithdrawOpen(false)}
         onWithdraw={handleWithdraw}
+        isSubmitting={withdraw.isPending}
         currentBalance={balance}
         maxWithdraw={maxWithdraw}
       />
     </div>
   );
 }
+

@@ -1,55 +1,32 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { MobileLayout } from "./components/layout/MobileLayout";
-import AuthPage from "./pages/AuthPage";
-import VaultPage from "./pages/VaultPage";
-import GamePage from "./pages/GamePage";
-//import FiatPage from "./pages/FiatPage";
-import NotFound from "./pages/NotFound";
+// src/App.tsx
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Navbar from '@/components/Navbar';
 
-const queryClient = new QueryClient();
+// Ajuste estes imports para as suas páginas reais
+import VaultPage from '@/pages/VaultPage';
+import GamePage from '@/pages/GamePage';
 
-// TODO: Replace with actual authentication state from auth context/passkey-kit
-const isAuthenticated = true; // Set to true for development/demo
+function Home() {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold">Welcome to Play-to-Save</h1>
+      <p className="text-muted-foreground mt-2">
+        Use o menu acima para acessar o Vault e o Game.
+      </p>
+    </div>
+  );
+}
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* Auth Route */}
-          <Route 
-            path="/auth" 
-            element={<AuthPage />} 
-          />
-          
-          {/* Protected Routes with Mobile Layout */}
-          <Route 
-            path="/" 
-            element={
-              isAuthenticated ? (
-                <MobileLayout />
-              ) : (
-                <Navigate to="/auth" replace />
-              )
-            }
-          >
-            <Route index element={<Navigate to="/vault" replace />} />
-            <Route path="vault" element={<VaultPage />} />
-            <Route path="game" element={<GamePage />} />            
-          </Route>
-          
-          {/* Catch-all for 404 */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/vault" element={<VaultPage />} />
+        <Route path="/game" element={<GamePage />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
 
-export default App;

@@ -1,73 +1,87 @@
-# Welcome to your Lovable project
+# DeFi Arcade — Play-to-Save 🎮💸
 
-## Project info
+**Play-to-Save: Turning Gaming Addiction into Healthy Saving Habits**
 
-**URL**: https://lovable.dev/projects/880a9573-a7a7-4844-9045-ebf9afb95ded
+---
 
-## How can I edit this code?
+## 🚩 Problem
+Young people often treat **online gambling games** (e.g., Fortune Tiger) as *investments*.  
+This misconception leads to **debt**, addiction, and lost savings.
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## 💡 Our Solution
+A **mobile gaming platform** with DeFi themes, where:
+- 🎮 Users can **only play after depositing** into a **lending pool**
+- 🏦 Deposits are held in a **FeeVault** contract integrated with **Blend**
+- 📈 Players **earn real yields** while having fun
+- 🧠 Mini-games teach **lending concepts** (utilization, APR, liquidations, risk management)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/880a9573-a7a7-4844-9045-ebf9afb95ded) and start prompting.
+**Benefit:** Players **learn, save, and earn** — instead of losing money to predatory gambling apps.
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## ✨ Features
+- **On-chain Vault (FeeVault + Blend):**
+  - Deposit & withdraw anytime via Freighter wallet
+  - Funds earn yield in Blend pools
+- **Arcade-style Educational Games:**
+  - **Liquidation Dodge** — Reflex game about Health Factor & liquidations
+  - **Rate Racer** — Speed challenge balancing utilization & APR
+  - **Pool Tycoon** — 1-minute strategy sim managing a lending pool
+- **Modern Web App:**
+  - React + TypeScript + Vite
+  - TailwindCSS + shadcn/ui for clean UI
+  - Stellar Soroban + Freighter for blockchain integration
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
+## Future Implementation
+- Passkey
+- Anchor integration (fiat/stable coin)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🏗 Architecture
+```mermaid
+flowchart LR
+  User((Player)) -- Freighter Wallet --> Frontend
+  Frontend -- RPC --> Stellar[Soroban RPC]
+  Stellar --> FeeVault[FeeVault Contract]
+  FeeVault --> Blend[Blend Lending Pools]
+  Blend --> Yield[Real Yield to Players]
 
-Follow these steps:
+🚀 Getting Started
+Prerequisites
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Node.js 18+
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+Freighter Wallet
+ installed
 
-# Step 3: Install the necessary dependencies.
-npm i
+Stellar Testnet RPC
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+** Installation **
+git clone https://github.com/joeyjoplin/play-to-save-vault.git
+cd play-to-save-vault
+npm install
+
+** Run **
 npm run dev
-```
+Open http://localhost:8080 and connect your wallet
 
-**Edit a file directly in GitHub**
+📚 Business & Learning Impact
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Players: Build healthy saving habits and financial literacy
+Parents & Educators: Safe alternative to gambling-like apps
+Ecosystem: Expands adoption of Stellar + Blend by gamifying DeFi
 
-**Use GitHub Codespaces**
+🤝 Contributing
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+PRs and ideas are welcome! Open an issue to suggest new games or integrations.
 
-## What technologies are used for this project?
+📜 License
+MIT — see LICENSE
 
-This project is built with:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
 
-## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/880a9573-a7a7-4844-9045-ebf9afb95ded) and click on Share -> Publish.
 
-## Can I connect a custom domain to my Lovable project?
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)

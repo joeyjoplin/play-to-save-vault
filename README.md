@@ -49,21 +49,19 @@ A **mobile gaming platform** with DeFi themes, where:
   Blend --> Yield[Real Yield to Players]
 
 🚀 Getting Started
-Prerequisites
+Prerequisites:
+- Node.js 18+
+- Freighter Wallet installed
+- Stellar Testnet RPC
+- Stellar SDK
+- FeeVault Contract: CB344LHGDJSNBJ4NLUJMAVK4J57DSGAINO3C6ZW7DZKC7L2ZUUJYPPWS
 
-Node.js 18+
-
-Freighter Wallet
- installed
-
-Stellar Testnet RPC
-
-** Installation **
-git clone https://github.com/joeyjoplin/play-to-save-vault.git
-cd play-to-save-vault
+## Installation 
+git clone https://github.com/joeyjoplin/play-to-save-vault.git <br>
+cd play-to-save-vault <br>
 npm install
 
-** Run **
+## Run 
 npm run dev
 Open http://localhost:8080 and connect your wallet
 

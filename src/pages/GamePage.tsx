@@ -1,122 +1,141 @@
-import { useState, useCallback } from "react";
+// src/pages/GamePage.tsx
+import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Coins, Trophy, Lock, Play, RotateCcw } from "lucide-react";
-import { CoinDropGame } from "@/components/game/CoinDropGame";
-import { GameLockedOverlay } from "@/components/game/GameLockedOverlay";
+import { Separator } from "@/components/ui/separator";
+import { Sparkles, Joystick, Gamepad2, Trophy, ArrowLeft } from "lucide-react";
+import LiquidationDodge from "@/components/game/LiquidationDodge";
+import RateRacer from "@/components/game/RateRacer";
+import PoolTycoon from "@/components/game/PoolTycoon";
 import { useVaultBalance, useMinVaultBalance } from "@/hooks/useVault";
-import { useToast } from "@/hooks/use-toast";
+
+type Mode = "menu" | "dodge" | "racer" | "tycoon";
 
 export default function GamePage() {
-  const { toast } = useToast();
-  // TODO: swap undefined for connected wallet address when you add wallet auth
-  const { data: balance = 0, isLoading } = useVaultBalance(undefined);
+  // Optional gate: unlock mini-games when Vault balance ≥ min
+  const { data: balance = 0 } = useVaultBalance(undefined);
   const minVaultBalance = useMinVaultBalance();
-  const isGameUnlocked = (balance ?? 0) >= minVaultBalance;
+  const unlocked = useMemo(() => (balance ?? 0) >= minVaultBalance, [balance, minVaultBalance]);
 
-  const [gameScore, setGameScore] = useState(0);
-  const [coinsCollected, setCoinsCollected] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  const handleScoreChange = useCallback((score: number) => setGameScore(score), []);
-  const handleCoinsChange = useCallback((coins: number) => setCoinsCollected(coins), []);
-  const handleGameEnd = useCallback((finalScore: number, finalCoins: number) => {
-    setIsPlaying(false);
-    toast({
-      title: "Nice run! 🎉",
-      description: `Score: ${finalScore} • Coins: ${finalCoins}`,
-    });
-  }, [toast]);
+  const [mode, setMode] = useState<Mode>("menu");
+  const goMenu = () => setMode("menu");
 
   return (
-    <div className="min-h-screen bg-background p-4 space-y-6 relative">
+    <div className="min-h-screen bg-background p-4 space-y-6">
       {/* Header */}
       <div className="text-center pt-4">
-        <h1 className="text-3xl font-bold bg-gradient-accent bg-clip-text text-transparent">
-          Coin Drop Game
+        <h1 className="text-3xl font-bold flex items-center justify-center gap-2">
+          <Sparkles className="w-6 h-6 text-accent" />
+          DeFi Arcade — Lending Edition
         </h1>
         <p className="text-muted-foreground mt-2">
-          Catch falling coins to train your saving superpowers
+          Three fast, punchy mini-games to learn lending risk & rewards.
         </p>
       </div>
 
-      {/* Game Stats */}
-      <div className="grid grid-cols-3 gap-2">
-        <Card className="bg-gradient-card border-border/50">
-          <CardContent className="p-3 text-center">
-            <p className="text-xs text-muted-foreground">Vault</p>
-            <p className="text-xl font-bold text-accent">
-              {isLoading ? "…" : `${balance.toFixed(2)} XLM`}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-card border-border/50">
-          <CardContent className="p-3 text-center">
-            <p className="text-xs text-muted-foreground">Score</p>
-            <p className="text-xl font-bold">{gameScore}</p>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-card border-border/50">
-          <CardContent className="p-3 text-center">
-            <p className="text-xs text-muted-foreground">Coins</p>
-            <p className="text-xl font-bold">{coinsCollected}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Game Area */}
-      <div className="relative">
-        {!isGameUnlocked && (
-          <GameLockedOverlay
-            requiredBalance={minVaultBalance}
-            currentBalance={balance ?? 0}
-          />
-        )}
-
-        <Card className={`bg-gradient-card border-border/50 ${!isGameUnlocked ? "opacity-50" : ""}`}>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Coins className="w-5 h-5 text-accent" /> Play to Save
-            </CardTitle>
-            <Badge variant={isGameUnlocked ? "default" : "secondary"}>
-              {isGameUnlocked ? "ACTIVE" : "LOCKED"}
-            </Badge>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <CoinDropGame
-                isActive={isGameUnlocked && isPlaying}
-                onScoreChange={setGameScore}
-                onCoinsChange={setCoinsCollected}
-                onGameEnd={handleGameEnd}
-              />
-
-              <div className="flex gap-2 justify-center">
-                <Button
-                  onClick={() => setIsPlaying(true)}
-                  disabled={!isGameUnlocked || isPlaying}
-                >
-                  <Play className="w-4 h-4 mr-2" /> Start
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => { setIsPlaying(false); setGameScore(0); setCoinsCollected(0); }}
-                  disabled={!isGameUnlocked}
-                >
-                  <RotateCcw className="w-4 h-4 mr-2" /> Reset
-                </Button>
-              </div>
-
-              {!isGameUnlocked && (
-                <p className="text-center text-sm text-muted-foreground">
-                  Deposit at least <span className="text-accent">{minVaultBalance} XLM</span> in your vault to play.
-                </p>
-              )}
+      {/* Access card */}
+      <Card className="bg-gradient-card border-border/50">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Gamepad2 className="w-5 h-5 text-accent" /> Game Access
+          </CardTitle>
+          <Badge variant={unlocked ? "default" : "secondary"}>
+            {unlocked ? "UNLOCKED" : "LOCKED"}
+          </Badge>
+        </CardHeader>
+        <CardContent className="flex items-center justify-between">
+          <div className="text-sm">
+            Vault balance:{" "}
+            <span className="font-semibold text-accent">{balance.toFixed(2)}</span>
+          </div>
+          {!unlocked && (
+            <div className="text-xs text-muted-foreground">
+              Deposit at least <span className="text-accent">{minVaultBalance}</span> to unlock.
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Body */}
+      {mode === "menu" ? (
+        <div className="grid gap-4 md:grid-cols-3">
+          {/* Liquidation Dodge */}
+          <Card className="border-border/50 hover:shadow-lg transition">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Joystick className="w-5 h-5 text-accent" />
+                Liquidation Dodge
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Prices fall, risk rises — dash left/right to keep your Health Factor safe and rack up combo points.
+              </p>
+              <Button className="w-full" disabled={!unlocked} onClick={() => setMode("dodge")}>
+                Play
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Rate Racer */}
+          <Card className="border-border/50 hover:shadow-lg transition">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-accent" />
+                Rate Racer
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Snap-decisions: nudge utilization to hit target bands before time runs out. Speed = score.
+              </p>
+              <Button className="w-full" disabled={!unlocked} onClick={() => setMode("racer")}>
+                Play
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Pool Tycoon */}
+          <Card className="border-border/50 hover:shadow-lg transition">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-accent" />
+                Pool Tycoon (1-min run)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Manage a lending pool for 12 rounds. Balance APY, reserves, and defaults to finish profitable.
+              </p>
+              <Button className="w-full" disabled={!unlocked} onClick={() => setMode("tycoon")}>
+                Play
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <Card className="bg-gradient-card border-border/50">
+          <CardHeader className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Joystick className="w-5 h-5 text-accent" />
+              {mode === "dodge" && "Liquidation Dodge"}
+              {mode === "racer" && "Rate Racer"}
+              {mode === "tycoon" && "Pool Tycoon"}
+            </CardTitle>
+            <Button variant="secondary" onClick={goMenu}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Menu
+            </Button>
+          </CardHeader>
+          <Separator />
+          <CardContent className="pt-4">
+            {mode === "dodge" && <LiquidationDodge onExit={goMenu} />}
+            {mode === "racer" && <RateRacer onExit={goMenu} />}
+            {mode === "tycoon" && <PoolTycoon onExit={goMenu} />}
           </CardContent>
         </Card>
-      </div>
+      )}
     </div>
   );
 }

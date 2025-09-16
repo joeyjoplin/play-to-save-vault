@@ -134,13 +134,7 @@ export default function VaultPage() {
             </div>
           )}
 
-          <div className="mt-4 flex items-start gap-3 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm">
-            <Shield className="w-4 h-4 mt-0.5 text-green-500" />
-            <p>
-              On-chain mode enabled. If nothing happens, check: RPC URL (HTTPS),
-              network (TESTNET), ContractId/Reserve, and Freighter is logged in.
-            </p>
-          </div>
+         
         </CardContent>
       </Card>
 
